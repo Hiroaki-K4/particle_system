@@ -1,2 +1,3 @@
 glfw/
-particle_system
+srcs/particle_system
+.vscode/

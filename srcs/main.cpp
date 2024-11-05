@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 
-#include "shader.hpp"
+#include "Shader.hpp"
 
 
 void processInput(GLFWwindow* window) {
@@ -41,7 +41,8 @@ int main() {
 
     int window_w = 1920;
     int window_h = 1080;
-    GLFWwindow* window = glfwCreateWindow(window_w, window_h, "Partical System", NULL, NULL);
+    std::string window_title = "Partical System";
+    GLFWwindow* window = glfwCreateWindow(window_w, window_h, window_title.c_str(), NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -61,21 +62,33 @@ int main() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    std::vector<float> circle_vertices = generate_circle_vertices(0.0f, 0.0f, 0.5f, 100, float(window_h)/float(window_w));
+    // std::vector<float> circle_vertices = generate_circle_vertices(0.0f, 0.0f, 0.5f, 100, float(window_h)/float(window_w));
+
+    std::vector<std::vector<float>> circles;
+    float aspect_ratio = float(window_h) / float(window_w);
+    float radius = 0.1f;
+    int num_segments = 100;
+    for (int i = 0; i < 5; ++i) {
+        float x = -0.8f + i * 0.4f; // Adjust positions horizontally
+        float y = 0.0f;
+        circles.push_back(generate_circle_vertices(x, y, radius, num_segments, aspect_ratio));
+    }
 
     unsigned int VAO, VBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, circle_vertices.size() * sizeof(float), circle_vertices.data(), GL_STATIC_DRAW);
+    // glBindVertexArray(VAO);
+    // glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    // glBufferData(GL_ARRAY_BUFFER, circle_vertices.size() * sizeof(float), circle_vertices.data(), GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    // glEnableVertexAttribArray(0);
 
     Shader particle_shader("../shaders/particle.vs", "../shaders/particle.fs");
 
+    double last_time = glfwGetTime();
+    int frame_num = 0;
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
 
@@ -83,11 +96,36 @@ int main() {
         particle_shader.use();
 
         // Draw circle
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, circle_vertices.size() / 3);
+        // glBindVertexArray(VAO);
+        // glDrawArrays(GL_TRIANGLE_FAN, 0, circle_vertices.size() / 3);
+
+        // Draw each circle
+        for (const auto& circle_vertices : circles) {
+            glBindVertexArray(VAO);
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+            glBufferData(GL_ARRAY_BUFFER, circle_vertices.size() * sizeof(float), circle_vertices.data(), GL_STATIC_DRAW);
+
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+            glEnableVertexAttribArray(0);
+
+            glDrawArrays(GL_TRIANGLE_FAN, 0, circle_vertices.size() / 3);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        // Measure FPS
+        double current_time = glfwGetTime();
+        double delta = current_time - last_time;
+        frame_num += 1;
+        if (delta >= 1.0) {
+            int fps = int(double(frame_num) / delta);
+            std::stringstream ss;
+            ss << window_title.c_str() << " [" << fps << " FPS]";
+            glfwSetWindowTitle(window, ss.str().c_str());
+            frame_num = 0;
+            last_time = current_time;
+        }
     }
 
     glfwTerminate();
