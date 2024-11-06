@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 
+#include "Particle.hpp"
 #include "Shader.hpp"
 
 
@@ -60,7 +61,7 @@ int main() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    std::vector<float> circle_vertices = generate_circle_vertices(0.0f, 0.0f, 0.05f, 100, float(window_h)/float(window_w));
+    std::vector<float> circle_vertices = generate_circle_vertices(0.0f, 0.0f, 0.0001f, 100, float(window_h)/float(window_w));
 
     unsigned int VAO, VBO;
     glGenVertexArrays(1, &VAO);
@@ -68,24 +69,14 @@ int main() {
 
     Shader particle_shader("../shaders/particle.vs", "../shaders/particle.fs");
 
-    // Generate a list of 100 quad  locations/translation-vectors
-    glm::vec2 translations[100];
-    int index = 0;
-    float offset = 0.1f;
-    for (int y = -10; y < 10; y += 2) {
-        for (int x = -10; x < 10; x += 2) {
-            glm::vec2 translation;
-            translation.x = (float)x / 10.0f + offset;
-            translation.y = (float)y / 10.0f + offset;
-            translations[index++] = translation;
-        }
-    }
+    int particle_num = 1000000;
+    Particle particle(particle_num);
 
     // Store instance data in an array buffer
     unsigned int instanceVBO;
     glGenBuffers(1, &instanceVBO);
     glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 100, &translations[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * particle_num, particle.get_position().data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindVertexArray(VAO);
@@ -105,17 +96,16 @@ int main() {
     int frame_num = 0;
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
-        translations[0].x += 0.001;
-        glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 100, &translations[0], GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        // translations[0].x += 0.001;
+        // glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+        // glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * particle_num, particle.get_position().data(), GL_STATIC_DRAW);
+        // glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
         particle_shader.use();
         glBindVertexArray(VAO);
-        // glDrawArraysInstanced(GL_TRIANGLES, 0, circle_vertices.size(), 100);
-        glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, circle_vertices.size() / 2, 100);  // Use GL_TRIANGLE_FAN
+        glDrawArraysInstanced(GL_TRIANGLE_FAN, 0, circle_vertices.size() / 2, particle_num);
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);
