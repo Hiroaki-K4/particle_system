@@ -61,7 +61,7 @@ int main() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    std::vector<float> circle_vertices = generate_circle_vertices(0.0f, 0.0f, 0.0005f, 10, float(window_h)/float(window_w));
+    std::vector<float> circle_vertices = generate_circle_vertices(0.0f, 0.0f, 0.0001f, 10, float(window_h)/float(window_w));
 
     unsigned int VAO, VBO;
     glGenVertexArrays(1, &VAO);
@@ -98,10 +98,10 @@ int main() {
         processInput(window);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // translations[0].x += 0.001;
-        // glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-        // glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * particle_num, particle.get_position().data(), GL_STATIC_DRAW);
-        // glBindBuffer(GL_ARRAY_BUFFER, 0);
+        particle.update_position_according_to_direction();
+        glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * particle_num, particle.get_position().data(), GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         particle_shader.use();
         glBindVertexArray(VAO);
