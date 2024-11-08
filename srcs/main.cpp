@@ -9,10 +9,25 @@
 #include "Shader.hpp"
 
 
+Particle* particle_system;
+
+
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
+}
+
+void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+
+    // Normalize mouse position to range [-1, 1]
+    float normalized_x = static_cast<float>(xpos) / width * 2.0f - 1.0f;
+    float normalized_y = 1.0f - static_cast<float>(ypos) / height * 2.0f;
+
+    std::cout << "set" << std::endl;
+    particle_system->set_gravity_pos(normalized_x, normalized_y);
 }
 
 std::vector<float> generate_circle_vertices(float center_x, float center_y, float radius,
@@ -49,6 +64,7 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
+    glfwSetCursorPosCallback(window, mouse_callback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -62,7 +78,7 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     float aspect_ratio = float(window_h)/float(window_w);
-    std::vector<float> circle_vertices = generate_circle_vertices(0.0f, 0.0f, 0.001f, 10, aspect_ratio);
+    std::vector<float> circle_vertices = generate_circle_vertices(0.0f, 0.0f, 0.0005f, 10, aspect_ratio);
 
     unsigned int VAO, VBO;
     glGenVertexArrays(1, &VAO);
@@ -72,6 +88,7 @@ int main() {
 
     int particle_num = 1000000;
     Particle particle(particle_num, aspect_ratio);
+    particle_system = &particle;
 
     // Store instance data in an array buffer
     unsigned int instanceVBO;
@@ -94,15 +111,21 @@ int main() {
     glVertexAttribDivisor(1, 1); // tell OpenGL this is an instanced vertex attribute
 
     double last_time = glfwGetTime();
+    double fps_last_time = glfwGetTime();
     int frame_num = 0;
     while (!glfwWindowShouldClose(window)) {
+
         processInput(window);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        double current_time = glfwGetTime();
+        double delta = current_time - last_time;
         // particle.update_position_according_to_direction();
-        // glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-        // glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * particle_num, particle.get_position().data(), GL_STATIC_DRAW);
-        // glBindBuffer(GL_ARRAY_BUFFER, 0);
+        particle.update_position(delta, aspect_ratio);
+        last_time = glfwGetTime();
+        glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * particle_num, particle.get_position().data(), GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         particle_shader.use();
         glBindVertexArray(VAO);
@@ -113,16 +136,16 @@ int main() {
         glfwPollEvents();
 
         // Measure FPS
-        double current_time = glfwGetTime();
-        double delta = current_time - last_time;
+        double fps_current_time = glfwGetTime();
+        double fps_delta = fps_current_time - fps_last_time;
         frame_num += 1;
-        if (delta >= 1.0) {
-            int fps = int(double(frame_num) / delta);
+        if (fps_delta >= 1.0) {
+            int fps = int(double(frame_num) / fps_delta);
             std::stringstream ss;
             ss << window_title.c_str() << " [" << fps << " FPS]";
             glfwSetWindowTitle(window, ss.str().c_str());
             frame_num = 0;
-            last_time = current_time;
+            fps_last_time = fps_current_time;
         }
     }
 
