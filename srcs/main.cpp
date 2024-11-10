@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 
-#include "Particle.hpp"
+#include "Particle.cuh"
 #include "Shader.hpp"
 
 
@@ -96,7 +96,8 @@ int main() {
     Shader particle_shader("../shaders/particle.vs", "../shaders/particle.fs");
 
     int particle_num = 1000000;
-    Particle particle(particle_num, aspect_ratio);
+    int threads = 256;
+    Particle particle(particle_num, aspect_ratio, threads);
     particle_system = &particle;
 
     // Store instance data in an array buffer
@@ -136,14 +137,12 @@ int main() {
     double fps_last_time = glfwGetTime();
     int frame_num = 0;
     while (!glfwWindowShouldClose(window)) {
-
         processInput(window);
         glClear(GL_COLOR_BUFFER_BIT);
 
         double current_time = glfwGetTime();
         double delta = current_time - last_time;
-        // particle.update_position_according_to_direction();
-        particle.update_position_and_color(delta, aspect_ratio);
+        particle.update_position_velocity_color(delta, aspect_ratio);
         last_time = glfwGetTime();
         glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * particle_num, particle.get_position().data(), GL_STATIC_DRAW);
