@@ -66,15 +66,16 @@ glm::vec2 Particle::calculate_reflection_vector(const glm::vec2 &I, const glm::v
 void Particle::update_position(float delta_time, float aspect_ratio) {
     for (std::size_t i = 0; i < this->position.size(); ++i) {
         glm::vec2 accel;
-        accel = this->gravity_pos - this->position[i];
+        glm::vec2 rescaled_pos = this->position[i];
+        rescaled_pos.x /= aspect_ratio;
+        accel = this->gravity_pos - rescaled_pos;
         accel *= glm::length(accel) * 10;
 
         this->velocity[i].x += accel.x * delta_time;
         this->velocity[i].y += accel.y * delta_time;
-        this->position[i].x += this->velocity[i].x * delta_time;
+        this->position[i].x += this->velocity[i].x * delta_time * aspect_ratio;
         this->position[i].y += this->velocity[i].y * delta_time;
     }
-    std::cout << "grav: " << this->gravity_pos.x << std::endl;
 }
 
 void Particle::update_position_according_to_direction() {

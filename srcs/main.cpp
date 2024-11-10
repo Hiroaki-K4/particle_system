@@ -10,24 +10,33 @@
 
 
 Particle* particle_system;
+bool is_update_gravity_point = false;
 
 
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        if (is_update_gravity_point) {
+            is_update_gravity_point = false;
+        } else {
+            is_update_gravity_point = true;
+        }
+    }
 }
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
-    int width, height;
-    glfwGetWindowSize(window, &width, &height);
+    if (is_update_gravity_point) {
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
 
-    // Normalize mouse position to range [-1, 1]
-    float normalized_x = static_cast<float>(xpos) / width * 2.0f - 1.0f;
-    float normalized_y = 1.0f - static_cast<float>(ypos) / height * 2.0f;
+        // Normalize mouse position to range [-1, 1]
+        float normalized_x = static_cast<float>(xpos) / width * 2.0f - 1.0f;
+        float normalized_y = 1.0f - static_cast<float>(ypos) / height * 2.0f;
 
-    std::cout << "set" << std::endl;
-    particle_system->set_gravity_pos(normalized_x, normalized_y);
+        particle_system->set_gravity_pos(normalized_x, normalized_y);
+    }
 }
 
 std::vector<float> generate_circle_vertices(float center_x, float center_y, float radius,
