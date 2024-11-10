@@ -24,9 +24,11 @@ class Particle {
     glm::vec2 *cu_position;
     glm::vec2 *cu_velocity;
     glm::vec3 *cu_color;
+    int threads;
+    int blocks;
 
    public:
-    Particle(int particle_num, float aspect_ratio);
+    Particle(int particle_num, float aspect_ratio, int threads);
     ~Particle();
 
     std::vector<glm::vec2> get_position();
@@ -36,7 +38,7 @@ class Particle {
 
     void initialize_position(int particle_num, float aspect_ratio);
 
-    void update_position_and_color(float delta_time, float aspect_ratio);
+    void update_position_velocity_color(float delta_time, float aspect_ratio);
     void create_new_color(float distance, glm::vec3 &new_color);
 
 };

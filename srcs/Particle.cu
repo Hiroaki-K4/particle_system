@@ -1,10 +1,12 @@
 #include "Particle.cuh"
 
 
-Particle::Particle(int particle_num, float aspect_ratio) {
+Particle::Particle(int particle_num, float aspect_ratio, int threads) {
     this->gravity_pos = glm::vec2(0.0f, 0.0f);
     this->max_distance = sqrt(2);
+    this->threads = threads;
     initialize_position(particle_num, aspect_ratio);
+    this->blocks = (this->position.size() + threads - 1) / threads;
 
     // Allocate device memory
     cudaMalloc(&cu_position, particle_num * sizeof(glm::vec2));
@@ -73,11 +75,8 @@ void Particle::initialize_position(int particle_num, float aspect_ratio) {
 //     }
 // }
 
-void Particle::update_position_and_color(float delta_time, float aspect_ratio) {
-    int threads = 256;
-    int blocks = (this->position.size() + threads - 1) / threads;
-
-    update_particle_kernel<<<blocks, threads>>>(
+void Particle::update_position_velocity_color(float delta_time, float aspect_ratio) {
+    update_particle_kernel<<<this->blocks, this->threads>>>(
         this->cu_position, this->cu_velocity, this->cu_color, this->gravity_pos,
         delta_time, aspect_ratio, this->position.size(), this->max_distance);
 

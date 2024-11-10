@@ -1,5 +1,5 @@
 #include "kernel.cuh"
-#include <iostream>
+
 
 __global__ void update_particle_kernel(
     glm::vec2 *cu_position, glm::vec2 *cu_velocity, glm::vec3 *cu_color, glm::vec2 gravity_pos,
@@ -13,7 +13,7 @@ __global__ void update_particle_kernel(
     glm::vec2 rescaled_pos = cu_position[idx];
     rescaled_pos.x /= aspect_ratio;
     glm::vec2 accel = gravity_pos - rescaled_pos;
-    glm::vec2 upscale_accel = accel * glm::length(accel) * 10.0f;
+    glm::vec2 upscale_accel = accel * glm::length(accel) * 2.0f;
     cu_velocity[idx].x += upscale_accel.x * delta_time;
     cu_velocity[idx].y += upscale_accel.y * delta_time;
     cu_position[idx].x += cu_velocity[idx].x * delta_time * aspect_ratio;
