@@ -9,9 +9,33 @@
 #include "Shader.hpp"
 
 
+Particle* particle_system;
+bool is_update_gravity_point = false;
+
+
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        if (is_update_gravity_point) {
+            is_update_gravity_point = false;
+        } else {
+            is_update_gravity_point = true;
+        }
+    }
+}
+
+void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
+    if (is_update_gravity_point) {
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+
+        // Normalize mouse position to range [-1, 1]
+        float normalized_x = static_cast<float>(xpos) / width * 2.0f - 1.0f;
+        float normalized_y = 1.0f - static_cast<float>(ypos) / height * 2.0f;
+
+        particle_system->set_gravity_pos(normalized_x, normalized_y);
     }
 }
 
@@ -49,6 +73,7 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
+    glfwSetCursorPosCallback(window, mouse_callback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -61,7 +86,8 @@ int main() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    std::vector<float> circle_vertices = generate_circle_vertices(0.0f, 0.0f, 0.0001f, 10, float(window_h)/float(window_w));
+    float aspect_ratio = float(window_h)/float(window_w);
+    std::vector<float> circle_vertices = generate_circle_vertices(0.0f, 0.0f, 0.0005f, 10, aspect_ratio);
 
     unsigned int VAO, VBO;
     glGenVertexArrays(1, &VAO);
@@ -70,7 +96,8 @@ int main() {
     Shader particle_shader("../shaders/particle.vs", "../shaders/particle.fs");
 
     int particle_num = 1000000;
-    Particle particle(particle_num);
+    Particle particle(particle_num, aspect_ratio);
+    particle_system = &particle;
 
     // Store instance data in an array buffer
     unsigned int instanceVBO;
@@ -93,12 +120,18 @@ int main() {
     glVertexAttribDivisor(1, 1); // tell OpenGL this is an instanced vertex attribute
 
     double last_time = glfwGetTime();
+    double fps_last_time = glfwGetTime();
     int frame_num = 0;
     while (!glfwWindowShouldClose(window)) {
+
         processInput(window);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        particle.update_position_according_to_direction();
+        double current_time = glfwGetTime();
+        double delta = current_time - last_time;
+        // particle.update_position_according_to_direction();
+        particle.update_position(delta, aspect_ratio);
+        last_time = glfwGetTime();
         glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * particle_num, particle.get_position().data(), GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -112,16 +145,16 @@ int main() {
         glfwPollEvents();
 
         // Measure FPS
-        double current_time = glfwGetTime();
-        double delta = current_time - last_time;
+        double fps_current_time = glfwGetTime();
+        double fps_delta = fps_current_time - fps_last_time;
         frame_num += 1;
-        if (delta >= 1.0) {
-            int fps = int(double(frame_num) / delta);
+        if (fps_delta >= 1.0) {
+            int fps = int(double(frame_num) / fps_delta);
             std::stringstream ss;
             ss << window_title.c_str() << " [" << fps << " FPS]";
             glfwSetWindowTitle(window, ss.str().c_str());
             frame_num = 0;
-            last_time = current_time;
+            fps_last_time = fps_current_time;
         }
     }
 

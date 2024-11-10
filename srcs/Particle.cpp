@@ -1,8 +1,17 @@
 #include "Particle.hpp"
 
-Particle::Particle(int particle_num) { initialize_position_randomly(particle_num); }
+// Particle::Particle(int particle_num) { initialize_position_randomly(particle_num); }
+Particle::Particle(int particle_num, float aspect_ratio) {
+    gravity_pos = glm::vec2(0.0f, 0.0f);
+    initialize_position(particle_num, aspect_ratio);
+}
 
 std::vector<glm::vec2> Particle::get_position() { return this->position; }
+
+void Particle::set_gravity_pos(float x, float y) {
+    this->gravity_pos.x = x;
+    this->gravity_pos.y = y;
+}
 
 void Particle::initialize_position_randomly(int particle_num) {
     std::random_device rd;   // Seed for the random number engine
@@ -26,12 +35,47 @@ void Particle::initialize_position_randomly(int particle_num) {
     }
 }
 
+void Particle::initialize_position(int particle_num, float aspect_ratio) {
+    std::random_device rd;   // Seed for the random number engine
+    std::mt19937 gen(rd());  // Mersenne Twister engine
+
+    // Define a distribution between -1 and 1
+    std::uniform_real_distribution<float> dis(0.0f, 2.0f * M_PI);
+    std::uniform_real_distribution<float> radius_dis(0.0f, 0.4f);
+    for (int i = 0; i < particle_num; i++) {
+        glm::vec2 pos;
+        float angle = dis(gen);
+        float radius = radius_dis(gen);
+        pos.x = cos(angle) * aspect_ratio * radius;
+        pos.y = sin(angle) * radius;
+        this->position.push_back(pos);
+    }
+
+    std::vector<glm::vec2> velo(particle_num, glm::vec2(0.0f, 0.0f));
+    this->velocity = velo;
+}
+
 glm::vec2 Particle::calculate_reflection_vector(const glm::vec2 &I, const glm::vec2 &n) {
     glm::vec2 normalized_n = glm::normalize(n);
     float dot_product = glm::dot(I, normalized_n);
     glm::vec2 reflection = I - 2 * dot_product * normalized_n;
 
     return reflection;
+}
+
+void Particle::update_position(float delta_time, float aspect_ratio) {
+    for (std::size_t i = 0; i < this->position.size(); ++i) {
+        glm::vec2 accel;
+        glm::vec2 rescaled_pos = this->position[i];
+        rescaled_pos.x /= aspect_ratio;
+        accel = this->gravity_pos - rescaled_pos;
+        accel *= glm::length(accel) * 10;
+
+        this->velocity[i].x += accel.x * delta_time;
+        this->velocity[i].y += accel.y * delta_time;
+        this->position[i].x += this->velocity[i].x * delta_time * aspect_ratio;
+        this->position[i].y += this->velocity[i].y * delta_time;
+    }
 }
 
 void Particle::update_position_according_to_direction() {
