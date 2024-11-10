@@ -7,6 +7,7 @@
 
 #include "Particle.cuh"
 #include "Shader.hpp"
+#include <cuda_gl_interop.h>
 
 
 Particle* particle_system;
@@ -53,9 +54,38 @@ std::vector<float> generate_circle_vertices(float center_x, float center_y, floa
     return vertices;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    int particle_num = 1000000;
+    float radius = 0.001f;
+    float gravity_strength = 2.0f;
+    // Check arguments
+    if (argc > 1) {
+        if (argc == 4) {
+            std::string particle_num_s(argv[1]);
+            std::string radius_s(argv[2]);
+            std::string gravity_strength_s(argv[3]);
+            try {
+                particle_num = std::stoi(particle_num_s);
+                radius = std::stof(radius_s);
+                gravity_strength = std::stof(gravity_strength_s);
+                if (particle_num <= 0 or radius <= 0.0f or gravity_strength <= 0.0f) {
+                    std::cout << "Error: Arguments should be over 0." << std::endl;
+                    return -1;
+                } 
+            } catch (...) {
+                std::cout << "Error: Failed to convert string. Please check that arguments are correct." << std::endl;
+                return -1;
+            }
+        } else {
+            std::cout << "Error: If you want to setup parameters, please set the arguments like this." << std::endl;
+            std::cout << "./particle_system [number of particles] [radius of particles] [strength of gravity]" << std::endl;
+            return -1;
+        }
+    }
+
+    // Initialize window
     if (!glfwInit()) {
-        std::cout << "Failed to initialize GLFW" << std::endl;
+        std::cout << "Error: Failed to initialize GLFW" << std::endl;
         return -1;
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -67,7 +97,7 @@ int main() {
     std::string window_title = "Partical System";
     GLFWwindow* window = glfwCreateWindow(window_w, window_h, window_title.c_str(), NULL, NULL);
     if (window == NULL) {
-        std::cout << "Failed to create GLFW window" << std::endl;
+        std::cout << "Error: Failed to create GLFW window" << std::endl;
         glfwTerminate();
         return -1;
     }
@@ -76,7 +106,7 @@ int main() {
     glfwSetCursorPosCallback(window, mouse_callback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cout << "Failed to initialize GLAD" << std::endl;
+        std::cout << "Error: Failed to initialize GLAD" << std::endl;
         glfwTerminate();
         return -1;
     }
@@ -87,7 +117,7 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     float aspect_ratio = float(window_h)/float(window_w);
-    std::vector<float> circle_vertices = generate_circle_vertices(0.0f, 0.0f, 0.0005f, 10, aspect_ratio);
+    std::vector<float> circle_vertices = generate_circle_vertices(0.0f, 0.0f, radius, 3, aspect_ratio);
 
     unsigned int VAO, VBO;
     glGenVertexArrays(1, &VAO);
@@ -95,9 +125,8 @@ int main() {
 
     Shader particle_shader("../shaders/particle.vs", "../shaders/particle.fs");
 
-    int particle_num = 1000000;
     int threads = 256;
-    Particle particle(particle_num, aspect_ratio, threads);
+    Particle particle(particle_num, aspect_ratio, threads, gravity_strength);
     particle_system = &particle;
 
     // Store instance data in an array buffer
