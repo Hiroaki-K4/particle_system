@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 
-#include "Particle.hpp"
+#include "Particle.cuh"
 #include "Shader.hpp"
 
 
@@ -142,7 +142,6 @@ int main() {
 
         double current_time = glfwGetTime();
         double delta = current_time - last_time;
-        // particle.update_position_according_to_direction();
         particle.update_position_and_color(delta, aspect_ratio);
         last_time = glfwGetTime();
         glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);

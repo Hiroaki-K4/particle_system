@@ -1,9 +1,9 @@
 PARENT_DIR := /home/h-kubo/mypro/
-SRCS := main.cpp Particle.cpp Shader.cpp glad.c
+SRCS := main.cpp Particle.cu Shader.cpp glad.c kernel.cu
 INCLUDE := -I../glfw/include -I../glad/include -I../glm
 LDFLAGS := -L$(PARENT_DIR)particle_system/glfw/build/src `pkg-config --libs glfw3` -lglfw3 -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 NAME := particle_system
-CXX := g++
+CXX := nvcc
 
 all: $(NAME)
 
