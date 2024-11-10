@@ -1,27 +1,30 @@
 #include "Particle.cuh"
 
-
-Particle::Particle(int particle_num, float aspect_ratio, int threads) {
+Particle::Particle(int particle_num, float aspect_ratio, int threads, float gravity_strength) {
     this->gravity_pos = glm::vec2(0.0f, 0.0f);
     this->max_distance = sqrt(2);
+    this->gravity_strength = gravity_strength;
     this->threads = threads;
     initialize_position(particle_num, aspect_ratio);
     this->blocks = (this->position.size() + threads - 1) / threads;
 
     // Allocate device memory
-    cudaMalloc(&cu_position, particle_num * sizeof(glm::vec2));
-    cudaMalloc(&cu_velocity, particle_num * sizeof(glm::vec2));
-    cudaMalloc(&cu_color, particle_num * sizeof(glm::vec3));
+    cudaMalloc(&this->cu_position, particle_num * sizeof(glm::vec2));
+    cudaMalloc(&this->cu_velocity, particle_num * sizeof(glm::vec2));
+    cudaMalloc(&this->cu_color, particle_num * sizeof(glm::vec3));
 
-    cudaMemcpy(cu_position, this->position.data(), particle_num * sizeof(glm::vec2), cudaMemcpyHostToDevice);
-    cudaMemcpy(cu_velocity, this->velocity.data(), particle_num * sizeof(glm::vec2), cudaMemcpyHostToDevice);
-    cudaMemcpy(cu_color, this->color.data(), particle_num * sizeof(glm::vec3), cudaMemcpyHostToDevice);
+    cudaMemcpy(this->cu_position, this->position.data(), particle_num * sizeof(glm::vec2),
+               cudaMemcpyHostToDevice);
+    cudaMemcpy(this->cu_velocity, this->velocity.data(), particle_num * sizeof(glm::vec2),
+               cudaMemcpyHostToDevice);
+    cudaMemcpy(this->cu_color, this->color.data(), particle_num * sizeof(glm::vec3),
+               cudaMemcpyHostToDevice);
 }
 
 Particle::~Particle() {
-    cudaFree(cu_position);
-    cudaFree(cu_velocity);
-    cudaFree(cu_color);
+    cudaFree(this->cu_position);
+    cudaFree(this->cu_velocity);
+    cudaFree(this->cu_color);
 }
 
 std::vector<glm::vec2> Particle::get_position() { return this->position; }
@@ -40,6 +43,7 @@ void Particle::initialize_position(int particle_num, float aspect_ratio) {
     // Define a distribution between -1 and 1
     std::uniform_real_distribution<float> dis(0.0f, 2.0f * M_PI);
     std::uniform_real_distribution<float> radius_dis(0.0f, 0.4f);
+    glm::vec3 initial_color;
     for (int i = 0; i < particle_num; i++) {
         glm::vec2 pos;
         float angle = dis(gen);
@@ -48,7 +52,6 @@ void Particle::initialize_position(int particle_num, float aspect_ratio) {
         pos.y = sin(angle) * radius;
         this->position.push_back(pos);
 
-        glm::vec3 initial_color(0.0f, 0.0f, 0.0f);
         create_new_color(glm::length(this->gravity_pos - pos), initial_color);
         this->color.push_back(initial_color);
     }
@@ -57,28 +60,10 @@ void Particle::initialize_position(int particle_num, float aspect_ratio) {
     this->velocity = velo;
 }
 
-// void Particle::update_position_and_color(float delta_time, float aspect_ratio) {
-//     glm::vec3 new_color(0.0f, 0.0f, 0.0f);
-//     for (std::size_t i = 0; i < this->position.size(); ++i) {
-//         glm::vec2 rescaled_pos = this->position[i];
-//         rescaled_pos.x /= aspect_ratio;
-//         glm::vec2 accel = this->gravity_pos - rescaled_pos;
-//         glm::vec2 upscale_accel = accel * glm::length(accel) * 10.0f;
-
-//         this->velocity[i].x += upscale_accel.x * delta_time;
-//         this->velocity[i].y += upscale_accel.y * delta_time;
-//         this->position[i].x += this->velocity[i].x * delta_time * aspect_ratio;
-//         this->position[i].y += this->velocity[i].y * delta_time;
-
-//         create_new_color(glm::length(accel), new_color);
-//         this->color[i] = new_color;
-//     }
-// }
-
 void Particle::update_position_velocity_color(float delta_time, float aspect_ratio) {
     update_particle_kernel<<<this->blocks, this->threads>>>(
-        this->cu_position, this->cu_velocity, this->cu_color, this->gravity_pos,
-        delta_time, aspect_ratio, this->position.size(), this->max_distance);
+        this->cu_position, this->cu_velocity, this->cu_color, this->gravity_pos, delta_time,
+        aspect_ratio, this->position.size(), this->max_distance, this->gravity_strength);
 
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess) {
@@ -88,8 +73,10 @@ void Particle::update_position_velocity_color(float delta_time, float aspect_rat
     }
     cudaDeviceSynchronize();
 
-    cudaMemcpy(this->position.data(), this->cu_position, this->position.size() * sizeof(glm::vec2), cudaMemcpyDeviceToHost);
-    cudaMemcpy(this->color.data(), this->cu_color, this->position.size() * sizeof(glm::vec3), cudaMemcpyDeviceToHost);
+    cudaMemcpy(this->position.data(), this->cu_position, this->position.size() * sizeof(glm::vec2),
+               cudaMemcpyDeviceToHost);
+    cudaMemcpy(this->color.data(), this->cu_color, this->position.size() * sizeof(glm::vec3),
+               cudaMemcpyDeviceToHost);
 }
 
 void Particle::create_new_color(float distance, glm::vec3 &new_color) {
