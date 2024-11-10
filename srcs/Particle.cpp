@@ -1,12 +1,14 @@
 #include "Particle.hpp"
 
 // Particle::Particle(int particle_num) { initialize_position_randomly(particle_num); }
-Particle::Particle(int particle_num, float aspect_ratio, glm::vec3 base_color) {
-    gravity_pos = glm::vec2(0.0f, 0.0f);
-    initialize_position(particle_num, aspect_ratio, base_color);
+Particle::Particle(int particle_num, float aspect_ratio) {
+    this->gravity_pos = glm::vec2(0.0f, 0.0f);
+    initialize_position(particle_num, aspect_ratio);
 }
 
 std::vector<glm::vec2> Particle::get_position() { return this->position; }
+
+std::vector<glm::vec3> Particle::get_color() { return this->color; }
 
 void Particle::set_gravity_pos(float x, float y) {
     this->gravity_pos.x = x;
@@ -35,7 +37,7 @@ void Particle::initialize_position_randomly(int particle_num) {
     }
 }
 
-void Particle::initialize_position(int particle_num, float aspect_ratio, glm::vec3 base_color) {
+void Particle::initialize_position(int particle_num, float aspect_ratio) {
     std::random_device rd;   // Seed for the random number engine
     std::mt19937 gen(rd());  // Mersenne Twister engine
 
@@ -50,7 +52,9 @@ void Particle::initialize_position(int particle_num, float aspect_ratio, glm::ve
         pos.y = sin(angle) * radius;
         this->position.push_back(pos);
 
-        this->
+        glm::vec3 initial_color(0.0f, 0.0f, 0.0f);
+        create_new_color(glm::length(this->gravity_pos - pos), initial_color);
+        this->color.push_back(initial_color);
     }
 
     std::vector<glm::vec2> velo(particle_num, glm::vec2(0.0f, 0.0f));
@@ -65,18 +69,21 @@ glm::vec2 Particle::calculate_reflection_vector(const glm::vec2 &I, const glm::v
     return reflection;
 }
 
-void Particle::update_position(float delta_time, float aspect_ratio) {
+void Particle::update_position_and_color(float delta_time, float aspect_ratio) {
+    glm::vec3 new_color(0.0f, 0.0f, 0.0f);
     for (std::size_t i = 0; i < this->position.size(); ++i) {
-        glm::vec2 accel;
         glm::vec2 rescaled_pos = this->position[i];
         rescaled_pos.x /= aspect_ratio;
-        accel = this->gravity_pos - rescaled_pos;
-        accel *= glm::length(accel) * 10;
+        glm::vec2 accel = this->gravity_pos - rescaled_pos;
+        glm::vec2 upscale_accel = accel * glm::length(accel) * 10.0f;
 
-        this->velocity[i].x += accel.x * delta_time;
-        this->velocity[i].y += accel.y * delta_time;
+        this->velocity[i].x += upscale_accel.x * delta_time;
+        this->velocity[i].y += upscale_accel.y * delta_time;
         this->position[i].x += this->velocity[i].x * delta_time * aspect_ratio;
         this->position[i].y += this->velocity[i].y * delta_time;
+
+        create_new_color(glm::length(accel), new_color);
+        this->color[i] = new_color;
     }
 }
 
@@ -109,4 +116,11 @@ void Particle::update_position_according_to_direction() {
             this->dir_vec[i] = reflect;
         }
     }
+}
+
+void Particle::create_new_color(float distance, glm::vec3 &new_color) {
+    float max_distance = sqrt(2);
+    float new_color_val = std::min(distance / max_distance, 1.0f);
+    new_color[0] = 1.0f - new_color_val;
+    new_color[2] = new_color_val;
 }

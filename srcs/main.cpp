@@ -96,8 +96,7 @@ int main() {
     Shader particle_shader("../shaders/particle.vs", "../shaders/particle.fs");
 
     int particle_num = 1000000;
-    glm::vec3 base_color(1.0, 0.5, 0.2);
-    Particle particle(particle_num, aspect_ratio, base_color);
+    Particle particle(particle_num, aspect_ratio);
     particle_system = &particle;
 
     // Store instance data in an array buffer
@@ -107,18 +106,31 @@ int main() {
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * particle_num, particle.get_position().data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+    unsigned int instance_color_VBO;
+    glGenBuffers(1, &instance_color_VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, instance_color_VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * particle_num, particle.get_color().data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, circle_vertices.size() * sizeof(float), circle_vertices.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // set instance data
+    // set instance data(position)
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glVertexAttribDivisor(1, 1); // tell OpenGL this is an instanced vertex attribute
+
+    // set instance data(color)
+    glEnableVertexAttribArray(2);
+    glBindBuffer(GL_ARRAY_BUFFER, instance_color_VBO);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glVertexAttribDivisor(2, 1); // tell OpenGL this is an instanced vertex attribute
 
     double last_time = glfwGetTime();
     double fps_last_time = glfwGetTime();
@@ -131,10 +143,13 @@ int main() {
         double current_time = glfwGetTime();
         double delta = current_time - last_time;
         // particle.update_position_according_to_direction();
-        particle.update_position(delta, aspect_ratio);
+        particle.update_position_and_color(delta, aspect_ratio);
         last_time = glfwGetTime();
         glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * particle_num, particle.get_position().data(), GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, instance_color_VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * particle_num, particle.get_color().data(), GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         particle_shader.use();
