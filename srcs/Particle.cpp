@@ -1,9 +1,9 @@
 #include "Particle.hpp"
 
 // Particle::Particle(int particle_num) { initialize_position_randomly(particle_num); }
-Particle::Particle(int particle_num, float aspect_ratio) {
+Particle::Particle(int particle_num, float aspect_ratio, glm::vec3 base_color) {
     gravity_pos = glm::vec2(0.0f, 0.0f);
-    initialize_position(particle_num, aspect_ratio);
+    initialize_position(particle_num, aspect_ratio, base_color);
 }
 
 std::vector<glm::vec2> Particle::get_position() { return this->position; }
@@ -35,7 +35,7 @@ void Particle::initialize_position_randomly(int particle_num) {
     }
 }
 
-void Particle::initialize_position(int particle_num, float aspect_ratio) {
+void Particle::initialize_position(int particle_num, float aspect_ratio, glm::vec3 base_color) {
     std::random_device rd;   // Seed for the random number engine
     std::mt19937 gen(rd());  // Mersenne Twister engine
 
@@ -49,6 +49,8 @@ void Particle::initialize_position(int particle_num, float aspect_ratio) {
         pos.x = cos(angle) * aspect_ratio * radius;
         pos.y = sin(angle) * radius;
         this->position.push_back(pos);
+
+        this->
     }
 
     std::vector<glm::vec2> velo(particle_num, glm::vec2(0.0f, 0.0f));

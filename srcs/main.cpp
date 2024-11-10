@@ -96,7 +96,8 @@ int main() {
     Shader particle_shader("../shaders/particle.vs", "../shaders/particle.fs");
 
     int particle_num = 1000000;
-    Particle particle(particle_num, aspect_ratio);
+    glm::vec3 base_color(1.0, 0.5, 0.2);
+    Particle particle(particle_num, aspect_ratio, base_color);
     particle_system = &particle;
 
     // Store instance data in an array buffer
