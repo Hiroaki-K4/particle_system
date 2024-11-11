@@ -56,7 +56,7 @@ std::vector<float> generate_circle_vertices(float center_x, float center_y, floa
 
 int main(int argc, char *argv[]) {
     int particle_num = 1000000;
-    float radius = 0.001f;
+    float radius = 0.003f;
     float gravity_strength = 2.0f;
     // Check arguments
     if (argc > 1) {
