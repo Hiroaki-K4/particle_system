@@ -1,9 +1,9 @@
 # particle_system
 In this project, I implemented a particle system. A particle system is a technique in computer graphics used to simulate fuzzy or complex phenomena, such as smoke, fire, water, explosions, magic effects, and other fluid-like motions. Instead of rendering a single object, particle systems use a large number of small particles, each of which has its own properties like **position, velocity, color, size, and lifespan**. By simulating the movement and interactions of these particles, the overall effect can appear natural and dynamic.
 
-In this project, more than **1 milloion** particles are moved according to gravity. To achieve this, I use **cuda** to speed up the process.
+In this project, more than **1 milloion** particles are moved according to **gravity**. To achieve this, I used **cuda** to speed up the process.
 
-The video is available on Youtube.
+A video of the Particle system in action can be seen on YouTube.
 
 [![Video Title](https://img.youtube.com/vi/DB6TcMyBnC0/0.jpg)](https://www.youtube.com/watch?v=DB6TcMyBnC0)
 
@@ -52,10 +52,10 @@ When I ran it with **1 million** particles in my environment, it was about 7 fps
 I use a thread size of 256 and the number of blocks is calculated from the number of particles and the number of threads as follows.
 
 $$
-blocks = (particleNumber + threads - 1) / threads;
+blocks = (particleNumber + threads - 1) / threads
 $$
 
-I use the following formula to get the current index in the process using cuda. Below image helps you to understand.
+I used the following formula to get the current index in the process using cuda. Below image helps you to understand.
 
 $$
 index = blockIdx.x \times blockDim.x + threadIdx.x
@@ -138,6 +138,17 @@ The default gravity point is $(0,0)$, but by pressing `s`, the mouse cursor posi
 
 <br></br>
 
+## Beautiful particles
+
+<img src="images/gallary_1.png" width='600'>
+
+<img src="images/gallary_2.png" width='600'>
+
+<img src="images/gallary_3.png" width='600'>
+
+<br></br>
+
 ## References
 - [An Even Easier Introduction to CUDA](https://developer.nvidia.com/blog/even-easier-introduction-cuda/)
 - [CUDA C++ Programming Guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/)
+- [Particle system](https://en.wikipedia.org/wiki/Particle_system)
