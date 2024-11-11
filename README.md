@@ -5,7 +5,7 @@ In this project, more than **1 milloion** particles are moved according to **gra
 
 A video of the Particle system in action can be seen on YouTube.
 
-[![Video Title](https://img.youtube.com/vi/DB6TcMyBnC0/0.jpg)](https://www.youtube.com/watch?v=DB6TcMyBnC0)
+[![Particle System](https://img.youtube.com/vi/DB6TcMyBnC0/0.jpg)](https://www.youtube.com/watch?v=DB6TcMyBnC0)
 
 <br></br>
 
@@ -61,7 +61,7 @@ $$
 index = blockIdx.x \times blockDim.x + threadIdx.x
 $$
 
-<img src="images/cuda.png" width='600'>
+<img src="images/cuda.png" width='800'>
 
 The accelerated code is show below.
 
@@ -140,11 +140,11 @@ The default gravity point is $(0,0)$, but by pressing `s`, the mouse cursor posi
 
 ## Beautiful particles
 
-<img src="images/gallary_1.png" width='600'>
+<img src="images/gallary_1.png" width='800'>
 
-<img src="images/gallary_2.png" width='600'>
+<img src="images/gallary_2.png" width='800'>
 
-<img src="images/gallary_3.png" width='600'>
+<img src="images/gallary_3.png" width='800'>
 
 <br></br>
 
