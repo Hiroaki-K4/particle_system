@@ -3,7 +3,7 @@ In this project, I implemented a particle system. A particle system is a techniq
 
 In this project, more than **1 milloion** particles are moved according to **gravity**. To achieve this, I used **cuda** to speed up the process.
 
-A video of the Particle system in action can be seen on YouTube.
+**↓↓ A video of the Particle system in action can be seen on YouTube. ↓↓**
 
 [![Particle System](https://img.youtube.com/vi/DB6TcMyBnC0/0.jpg)](https://www.youtube.com/watch?v=DB6TcMyBnC0)
 
